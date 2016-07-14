@@ -11,33 +11,30 @@
 
 import UIKit
 
-protocol CreateOrderInteractorInput
-{
-  func doSomething(request: CreateOrderRequest)
+protocol CreateOrderInteractorInput {
+	var shippingMethods: [String] { get }
+
+	func formatExpirationDate(request: CreateOrder_FormatExpirationDate_Request)
 }
 
-protocol CreateOrderInteractorOutput
-{
-  func presentSomething(response: CreateOrderResponse)
+protocol CreateOrderInteractorOutput {
+	func presentExpirationDate(response: CreateOrder_FormatExpirationDate_Response)
 }
 
-class CreateOrderInteractor: CreateOrderInteractorInput
-{
-  var output: CreateOrderInteractorOutput!
-  var worker: CreateOrderWorker!
-  
-  // MARK: Business logic
-  
-  func doSomething(request: CreateOrderRequest)
-  {
-    // NOTE: Create some Worker to do the work
-    
-    worker = CreateOrderWorker()
-    worker.doSomeWork()
-    
-    // NOTE: Pass the result to the Presenter
-    
-    let response = CreateOrderResponse()
-    output.presentSomething(response)
-  }
+class CreateOrderInteractor: CreateOrderInteractorInput {
+	var output: CreateOrderInteractorOutput!
+	var worker: CreateOrderWorker!
+	var shippingMethods: [String] = [
+		"Standard Shipping",
+		"Two-Day Shipping",
+		"One-Day Shipping"
+	]
+
+	// MARK: Business logic
+
+	func formatExpirationDate(request: CreateOrder_FormatExpirationDate_Request) {
+		let response = CreateOrder_FormatExpirationDate_Response(date: request.date)
+
+		output.presentExpirationDate(response)
+	}
 }

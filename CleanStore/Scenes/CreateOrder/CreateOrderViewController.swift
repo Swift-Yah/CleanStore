@@ -11,53 +11,130 @@
 
 import UIKit
 
-protocol CreateOrderViewControllerInput
-{
-  func displaySomething(viewModel: CreateOrderViewModel)
+protocol CreateOrderViewControllerInput {
+	func displayExpirationDate(viewModel: CreateOrder_FormatExpirationDate_ViewModel)
 }
 
-protocol CreateOrderViewControllerOutput
-{
-  func doSomething(request: CreateOrderRequest)
+protocol CreateOrderViewControllerOutput {
+	var shippingMethods: [String] { get }
+
+	func formatExpirationDate(request: CreateOrder_FormatExpirationDate_Request)
 }
 
-class CreateOrderViewController: UITableViewController, CreateOrderViewControllerInput
-{
-  var output: CreateOrderViewControllerOutput!
-  var router: CreateOrderRouter!
-  
-  // MARK: Object lifecycle
-  
-  override func awakeFromNib()
-  {
-    super.awakeFromNib()
-    CreateOrderConfigurator.sharedInstance.configure(self)
-  }
-  
-  // MARK: View lifecycle
-  
-  override func viewDidLoad()
-  {
-    super.viewDidLoad()
-    doSomethingOnLoad()
-  }
-  
-  // MARK: Event handling
-  
-  func doSomethingOnLoad()
-  {
-    // NOTE: Ask the Interactor to do some work
-    
-    let request = CreateOrderRequest()
-    output.doSomething(request)
-  }
-  
-  // MARK: Display logic
-  
-  func displaySomething(viewModel: CreateOrderViewModel)
-  {
-    // NOTE: Display the result from the Presenter
-    
-    // nameTextField.text = viewModel.name
-  }
+class CreateOrderViewController: UITableViewController {
+	var output: CreateOrderViewControllerOutput!
+	var router: CreateOrderRouter!
+
+	// MARK: Text fields
+
+	@IBOutlet var textFields: [UITextField]!
+
+	// MARK: Shipping method
+
+	@IBOutlet weak var shippingMethodTextField: UITextField!
+	@IBOutlet var shippingMethodPicker: UIPickerView!
+
+	// MARK: Expiration date
+
+	@IBOutlet weak var expirationDateTextField: UITextField!
+	@IBOutlet var expirationDatePicker: UIDatePicker!
+
+	@IBAction func expirationDatePickerValueChanged() {
+		let date = expirationDatePicker.date
+
+		let request = CreateOrder_FormatExpirationDate_Request(date: date)
+
+		output.formatExpirationDate(request)
+	}
+}
+
+// MARK: Object lifecycle
+
+extension CreateOrderViewController {
+	override func awakeFromNib() {
+		super.awakeFromNib()
+
+		CreateOrderConfigurator.sharedInstance.configure(self)
+	}
+}
+
+// MARK: View lifecycle
+
+extension CreateOrderViewController {
+	override func viewDidLoad() {
+		super.viewDidLoad()
+
+		configurePickers()
+	}
+
+	// MARK: Event handling
+
+	func configurePickers() {
+		shippingMethodTextField.inputView = shippingMethodPicker
+		expirationDateTextField.inputView = expirationDatePicker
+	}
+}
+
+// MARK: TableView lifecycle
+
+extension CreateOrderViewController {
+	override func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+		guard let cell = tableView.cellForRowAtIndexPath(indexPath) else { return }
+
+		for textField in textFields {
+			guard textField.isDescendantOfView(cell) else { continue }
+
+			textField.becomeFirstResponder()
+		}
+	}
+}
+
+// MARK: CreateOrderViewControllerInput conforms
+
+extension CreateOrderViewController: CreateOrderViewControllerInput {
+	func displayExpirationDate(viewModel: CreateOrder_FormatExpirationDate_ViewModel) {
+		let date = viewModel.date
+
+		expirationDateTextField.text = date
+	}
+}
+
+// MARK: UITextFieldDelegate conforms
+
+extension CreateOrderViewController: UITextFieldDelegate {
+	func textFieldShouldReturn(textField: UITextField) -> Bool {
+		textField.resignFirstResponder()
+
+		if let index = textFields.indexOf(textField) where index < textFields.count - 1 {
+			let nextTextField = textFields[index + 1]
+
+			nextTextField.becomeFirstResponder()
+		}
+
+		return true
+	}
+}
+
+// MARK: UIPickerViewDataSource conforms
+
+extension CreateOrderViewController: UIPickerViewDataSource {
+	func numberOfComponentsInPickerView(pickerView: UIPickerView) -> Int {
+		return 1
+	}
+
+	func pickerView(pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+		return output.shippingMethods.count
+	}
+}
+
+// MARK: UIPickerViewDelegate conforms
+
+extension CreateOrderViewController: UIPickerViewDelegate {
+	func pickerView(pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+		return output.shippingMethods[row]
+	}
+
+	func pickerView(pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+		shippingMethodTextField.text = output.shippingMethods[row]
+	}
 }

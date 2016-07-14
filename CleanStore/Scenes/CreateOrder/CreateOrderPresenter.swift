@@ -11,27 +11,32 @@
 
 import UIKit
 
-protocol CreateOrderPresenterInput
-{
-  func presentSomething(response: CreateOrderResponse)
+protocol CreateOrderPresenterInput {
+	func presentExpirationDate(response: CreateOrder_FormatExpirationDate_Response)
 }
 
-protocol CreateOrderPresenterOutput: class
-{
-  func displaySomething(viewModel: CreateOrderViewModel)
+protocol CreateOrderPresenterOutput: class {
+	func displayExpirationDate(viewModel: CreateOrder_FormatExpirationDate_ViewModel)
 }
 
-class CreateOrderPresenter: CreateOrderPresenterInput
-{
-  weak var output: CreateOrderPresenterOutput!
-  
-  // MARK: Presentation logic
-  
-  func presentSomething(response: CreateOrderResponse)
-  {
-    // NOTE: Format the response from the Interactor and pass the result back to the View Controller
-    
-    let viewModel = CreateOrderViewModel()
-    output.displaySomething(viewModel)
-  }
+class CreateOrderPresenter: CreateOrderPresenterInput {
+	weak var output: CreateOrderPresenterOutput!
+
+	// MARK: Expiration Date
+
+	let dateFormatter: NSDateFormatter = {
+		let dateFormatter = NSDateFormatter()
+
+		dateFormatter.dateStyle = .ShortStyle
+		dateFormatter.timeStyle = .NoStyle
+
+		return dateFormatter
+	}()
+
+	func presentExpirationDate(response: CreateOrder_FormatExpirationDate_Response) {
+		let date = dateFormatter.stringFromDate(response.date)
+		let viewModel = CreateOrder_FormatExpirationDate_ViewModel(date: date)
+
+		output.displayExpirationDate(viewModel)
+	}
 }
